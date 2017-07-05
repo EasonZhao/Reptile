@@ -11,6 +11,8 @@ var Message = module.exports = function(propertys) {
       this.payload_ = new payload.payload_version(propertys);
     } else if(this.heading_.command === 'verack') {
 
+    } else if(this.heading_.command === 'getaddr') {
+      
     }
   }
   return this;

@@ -44,9 +44,9 @@ describe('Protocol', function() {
     it('IP is 133.130.126.171', function() {
       var buf = new Buffer([
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0xff, 0xff, 0x85, 0x82, 0x7e, 0xab
+        0x00, 0x00, 0xff, 0xff, 0x85, 0x82, 0xff, 0xab
       ]);
-      assert.equal(bufToIPv4(buf), '133.130.126.171');
+      assert.equal(bufToIPv4(buf), '133.130.255.171');
     });
     it('IP is 0.0.0.0', function() {
       var buf = new Buffer([

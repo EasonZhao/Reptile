@@ -1,5 +1,6 @@
 var Int64LE = require('int64-buffer').Int64LE;
 var IPv4ToBuf = require('./utils').IPv4ToBuf;
+var bufToIPv4 = require('./utils').bufToIPv4;
 
 var payload_version = function(propertys) {
   const agent_size = 17;
@@ -71,6 +72,8 @@ payload_version.prototype.data = function() {
   return data;
 };
 
+var payload_addr = function(propertys) {};
+
 module.exports = {
   fromData : function(command_name, data) {
     if (command_name === 'version') {
@@ -92,8 +95,24 @@ module.exports = {
       return pl;
     } else if (command_name === 'verack') {
       return null;
+    } else if (command_name === 'addr') {
+      var pl = new payload_addr();
+      pl.address_count = data.readInt8();
+      pl.addresses = new Array(pl.address_count);
+      var pos = 1;
+      for (var i=0; i<pl.address_count; i++) {
+        var asset = {
+          timestamp : Int64LE(data.slice(pos, pos+4)).toNumber(),
+          services : Int64LE(data.slice(pos+4, pos+12)).toNumber(),
+          ip : bufToIPv4(data.slice(pos+12, pos+28)),
+          port : data.readUInt16LE(pos+28)
+        };
+        pl.addresses[i] = asset;
+        pos += 30;
+      }
+      return pl;
     } else {
-      console.log('Unknow command type.');
+      //console.log('Unknow command type.');
       return null;
     }
   },

@@ -9,7 +9,7 @@ module.exports = {
   },
   bufToIPv4 : function(data) {
     assert(data.length === 16);
-    var ip_data = data.slice(data.lastIndexOf(0xff) + 1);
+    var ip_data = data.slice(data.indexOf(0xffff) + 2);
     assert(ip_data.length === 4);
     return util.format('%d.%d.%d.%d', ip_data[0], ip_data[1], ip_data[2],
       ip_data[3]);

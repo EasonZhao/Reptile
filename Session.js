@@ -3,12 +3,20 @@ var Decoder = require('./protocol/Decoder');
 var Message = require('./protocol/message');
 var IPv4ToBuf = require('./protocol/utils').IPv4ToBuf;
 var randomNonce = require('./protocol/utils').randomNonce;
+var moment = require('moment');
 
 var dispatch_message = function(message) {
-  console.log('[attach_command] ' , message.heading_.command);
+  //console.log(moment().format('YYYY-MM-DD, hh:mm:ss'), '[attach_command] ' , message.heading_.command);
   if (message.heading_.command === 'version') {
     var ack = new Message({command:'verack'});
     this.send_command(ack);
+  } else if (message.heading_.command === 'verack') {
+    var getaddr = new Message({command:'getaddr'});
+    this.send_command(getaddr);
+  } else if (message.heading_.command === 'addr') {
+    message.payload_.addresses.forEach(function(address) {
+      console.log(address);
+    });
   }
 };
 function Session(address, port) {
@@ -44,7 +52,6 @@ Session.prototype.start = function() {
     this.decoder_.append(data);
     this.decoder_.decode();
   }.bind(this));
-
 };
 
 Session.prototype.send_command = function(message) {
@@ -52,11 +59,7 @@ Session.prototype.send_command = function(message) {
   this.client_.write(message.data());
 };
 
-Session.prototype.attach_command = function(message) {
-
-};
-
-var host = '192.168.1.136';
+var host = '139.59.39.196';
 var port = 5251;
 var se = new Session(host, port);
 se.start();
