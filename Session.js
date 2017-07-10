@@ -19,6 +19,7 @@ var dispatch_message = function(message) {
     });
   }
 };
+
 function Session(address, port) {
   this.client_ = new net.Socket();
   this.address_ = address;
@@ -31,7 +32,7 @@ function Session(address, port) {
 Session.prototype.start = function() {
   this.client_.connect(this.port_, this.address_, function(err) {
     if (err) throw err;
-    console.log('[Session] ', 'connected and send version command');
+    console.log('[Session] ', 'connected', moment());
     var message = new Message({
       command : 'version',
       version : 70012,
@@ -52,6 +53,10 @@ Session.prototype.start = function() {
     this.decoder_.append(data);
     this.decoder_.decode();
   }.bind(this));
+
+  this.client_.on('end', function(data) {
+    console.log('[Session] socket disconnect', moment());
+  });
 };
 
 Session.prototype.send_command = function(message) {
