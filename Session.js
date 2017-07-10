@@ -1,9 +1,11 @@
 var net = require('net');
+var moment = require('moment');
+var updateAddresses = require('./db').updateAddresses;
+var moment = require('moment');
 var Decoder = require('./protocol/Decoder');
 var Message = require('./protocol/message');
 var IPv4ToBuf = require('./protocol/utils').IPv4ToBuf;
 var randomNonce = require('./protocol/utils').randomNonce;
-var moment = require('moment');
 
 var dispatch_message = function(message) {
   //console.log(moment().format('YYYY-MM-DD, hh:mm:ss'), '[attach_command] ' , message.heading_.command);
@@ -14,8 +16,15 @@ var dispatch_message = function(message) {
     var getaddr = new Message({command:'getaddr'});
     this.send_command(getaddr);
   } else if (message.heading_.command === 'addr') {
+    //message.payload_.addresses.forEach(function(address) {
+     // console.log(address);
+    //});
+    var arr = new Array();
     message.payload_.addresses.forEach(function(address) {
-      console.log(address);
+      arr.push(address.ip);
+    });
+    updateAddresses(arr, function() {
+      console.log('write to redis');
     });
   }
 };
