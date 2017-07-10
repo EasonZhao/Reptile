@@ -6,6 +6,8 @@ var Decoder = require('./protocol/Decoder');
 var Message = require('./protocol/message');
 var IPv4ToBuf = require('./protocol/utils').IPv4ToBuf;
 var randomNonce = require('./protocol/utils').randomNonce;
+const util = require('util');
+const cfg = require('./config');
 
 var dispatch_message = function(message) {
   //console.log(moment().format('YYYY-MM-DD, hh:mm:ss'), '[attach_command] ' , message.heading_.command);
@@ -16,30 +18,34 @@ var dispatch_message = function(message) {
     var getaddr = new Message({command:'getaddr'});
     this.send_command(getaddr);
   } else if (message.heading_.command === 'addr') {
-    //message.payload_.addresses.forEach(function(address) {
-     // console.log(address);
-    //});
     var arr = new Array();
     message.payload_.addresses.forEach(function(address) {
       arr.push(address.ip);
     });
     updateAddresses(arr, function() {
       console.log('write to redis');
-    });
+      setTimeout(function() {
+        this.stop();
+      }.bind(this), cfg.delay);
+    }.bind(this));
   }
 };
 
-function Session(address, port) {
+function Session(opt) {
   this.client_ = new net.Socket();
-  this.address_ = address;
-  this.port_ = port;
+  this.client_.setTimeout(cfg.timeout);
+  this.opt_ = opt;
   this.decoder_ = new Decoder(this);
   this.decoder_.handle_ = dispatch_message.bind(this);
   this.nonce_ = randomNonce(19);
 }
 
 Session.prototype.start = function() {
-  this.client_.connect(this.port_, this.address_, function(err) {
+  var option = {
+    port : this.opt_.port,
+    host : this.opt_.host
+  };
+  this.client_.connect(option, function(err) {
     if (err) throw err;
     console.log('[Session] ', 'connected', moment());
     var message = new Message({
@@ -66,6 +72,15 @@ Session.prototype.start = function() {
   this.client_.on('end', function(data) {
     console.log('[Session] socket disconnect', moment());
   });
+  
+  this.client_.on('timeout', () => {
+    console.log('timeout');
+    this.client_.end(); 
+  });
+};
+
+Session.prototype.stop = function() {
+  this.client_.end();
 };
 
 Session.prototype.send_command = function(message) {
@@ -73,9 +88,15 @@ Session.prototype.send_command = function(message) {
   this.client_.write(message.data());
 };
 
-var host = '139.59.39.196';
-var port = 5251;
-var se = new Session(host, port);
-se.start();
+var main = function() {
+  var opt = {
+    port : cfg.seed.port,
+    host : cfg.seed.host
+  };
+  var se = new Session(opt);
+  se.start();
+};
+
+main();
 
 module.exports = Session;
